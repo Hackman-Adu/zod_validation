@@ -17,7 +17,6 @@ class ValidateModel {
   /// }
   /// ```
   ///
-  final Map<String, dynamic> result;
 
   /// List with the errors
   ///
@@ -29,11 +28,7 @@ class ValidateModel {
   /// ```
   final List<String> resultSTR;
 
-  ValidateModel({
-    required this.isValid,
-    required this.result,
-    required this.resultSTR,
-  });
+  ValidateModel({required this.isValid, required this.resultSTR});
 
   /// true when `isValid` is false
   bool get isNotValid => !isValid;

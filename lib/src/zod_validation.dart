@@ -1,9 +1,5 @@
-import 'package:zod_validation/src/locales/i_locale.dart';
 import 'package:zod_validation/src/models/validade_model.dart';
 import 'package:zod_validation/src/validations.dart';
-
-import 'locales/locale_br.dart';
-export 'package:zod_validation/src/locales/enum_locale.dart';
 
 /// type of return of the validation
 typedef CallBack = String? Function(dynamic value);
@@ -12,34 +8,25 @@ typedef CallBack = String? Function(dynamic value);
 /// it is responsible for validating the data
 /// and returning the error message
 class Zod {
-  /// this is the default locale
-  static ILocaleZod zodLocaleInstance = LocaleBR();
-
-  /// parameter responsible for receiving the locale
-  ///
-  /// ```dart
-  /// localeZod: Zod(localeZod: LocaleEN())
-  /// ```
-  final ILocaleZod? localeZod;
-
   /// list of validations
   final List<CallBack> _validations = [];
 
-  ILocaleZod get _zod => localeZod ?? zodLocaleInstance;
+  /// custom message to return if validation is not true
+  final String message;
 
-  Zod({this.localeZod});
+  Zod(this.message);
 
   /// this method is responsible for email validation
-  Zod email([String? message]) {
+  Zod email() {
     return _add((v) {
-      return Validations.isEmail(v) ? null : message ?? _zod.email;
+      return Validations.isEmail(v) ? null : message;
     });
   }
 
   /// this method is responsible for phone validation
-  Zod phone([String? message]) {
+  Zod phone() {
     return _add((v) {
-      return Validations.isPhone(v) ? null : message ?? _zod.phone;
+      return Validations.isPhone(v) ? null : message;
     });
   }
 
@@ -66,7 +53,7 @@ class Zod {
               special: special,
               upper: upper)
           ? null
-          : message ?? _zod.password;
+          : message;
     });
   }
 
@@ -77,79 +64,73 @@ class Zod {
   /// Zod().type<int>()
   /// ```
   ///
-  Zod type<T>([String? message]) {
+  Zod type<T>() {
     return _add((v) {
-      return Validations.matchTypes<T>(v) ? null : message ?? _zod.type<T>();
+      return Validations.matchTypes<T>(v) ? null : message;
     });
   }
 
   /// verify emails validate separated by comma
   /// example: email1@gmail,com,email2@gmail,com
-  Zod isEmails([String? message]) {
+  Zod isEmails() {
     return _add((v) {
-      return Validations.required(v) ? null : message ?? _zod.emails;
+      return Validations.required(v) ? null : message;
     });
   }
 
   /// verify equals validate
-  Zod equals(value, [String? message]) {
+  Zod equals(value) {
     return _add((v) {
-      return Validations.equals(value, v) ? null : message ?? _zod.equals;
+      return Validations.equals(value, v) ? null : message;
     });
   }
 
   /// this method is responsible for validation if the param existe
-  Zod required([String? message]) {
+  Zod required() {
     return _add((v) {
-      return Validations.required(v) ? null : message ?? _zod.required;
+      return Validations.required(v) ? null : message;
     });
   }
 
   /// this method is responsible for min validation
-  Zod min(int min, [String? message]) {
+  Zod min(int min) {
     return _add((v) {
-      return Validations.minCharacters(v, min)
-          ? null
-          : message ?? _zod.min(min);
+      return Validations.minCharacters(v, min) ? null : message;
     });
   }
 
   /// this method is responsible for max validation
-  Zod max(int max, [String? message]) {
+  Zod max(int max) {
     return _add((v) {
-      return Validations.maxCharacters(v, max)
-          ? null
-          : message ?? _zod.max(max);
+      return Validations.maxCharacters(v, max) ? null : message;
     });
   }
 
   /// this method is responsible for cpf validation
-  Zod cpf([String? message]) {
+  Zod cpf() {
     return _add((v) {
-      return Validations.validateCPF(v) ? null : message ?? _zod.cpf;
+      return Validations.validateCPF(v) ? null : message;
     });
   }
 
   /// this method is responsible for cnpj validation
-  Zod cnpj([String? message]) {
+  Zod cnpj() {
     return _add((v) {
-      return Validations.validateCNPJ(v) ? null : message ?? _zod.cnpj;
+      return Validations.validateCNPJ(v) ? null : message;
     });
   }
 
-  Zod cpfCnpj([String? message]) {
+  Zod cpfCnpj() {
     return _add((v) {
       return Validations.validateCPF(v) || Validations.validateCNPJ(v)
           ? null
-          : message ?? _zod.cpfCnpj;
+          : message;
     });
   }
 
-  Zod isDate(String? message, {DateTime? max, DateTime? min}) {
+  Zod isDate({DateTime? max, DateTime? min}) {
     return _add((v) {
-      return Validations.date(v, maxDate: max, minDate: min)
-          ? null
-          : message ?? _zod.isDate;
+      return Validations.date(v, maxDate: max, minDate: min) ? null : message;
     });
   }
 
@@ -161,10 +142,10 @@ class Zod {
     });
   }
 
-  Zod custom(bool Function(dynamic) validate, {String? errorMessage}) {
+  Zod custom(bool Function(dynamic) validate) {
     return _add((v) {
       if (validate(v)) return null;
-      return errorMessage ?? _zod.custom;
+      return message;
     });
   }
 
@@ -184,58 +165,42 @@ class Zod {
     return null;
   }
 
-  ///
-  /// The return id a Map<String, dynamic> with the errors
-  /// or
   /// The return id a List<String> with the errors
   ///
-  static ValidateModel validate({
-    required Map<String, dynamic> data,
-    required Map<String, dynamic> params,
-    bool returnString = false,
-  }) {
-    final str = _validateString(data: data, params: params);
-    final map = _validateMapping(data: data, params: params);
-    return ValidateModel(isValid: map.isEmpty, resultSTR: str, result: map);
+  static ValidateModel validate(
+      {required Map<String, dynamic> data,
+      required Map<String, dynamic> schema}) {
+    if (!_validSchemaData(data: data, schema: schema)) {
+      throw Exception("Invalid data");
+    }
+    final str = _validateString(data: data, schedule: schema);
+    return ValidateModel(isValid: str.isEmpty, resultSTR: str);
   }
 
-  static List<String> _validateString({
-    required Map<String, dynamic> data,
-    required Map<String, dynamic> params,
-  }) {
+  static bool _validSchemaData(
+      {required Map<String, dynamic> data,
+      required Map<String, dynamic> schema}) {
+    var schemaKeys = schema.entries.map((entry) => entry.key).toList().toSet();
+    var dataKeys = data.entries.map((entry) => entry.key).toList().toSet();
+    return schemaKeys.difference(dataKeys).isEmpty &&
+        dataKeys.difference(schemaKeys).isEmpty;
+  }
+
+  static List<String> _validateString(
+      {required Map<String, dynamic> data,
+      required Map<String, dynamic> schedule}) {
     final errors = <String>[];
 
-    params.forEach((key, value) {
+    schedule.forEach((key, value) {
       if (value is Zod) {
         final valid = value.build(data[key] ?? '');
         if (valid != null) errors.add('$key: $valid');
       } else if (value is Map) {
         final res = _validateString(
           data: data[key] ?? {},
-          params: value as Map<String, dynamic>,
+          schedule: value as Map<String, dynamic>,
         );
         res.forEach((e) => errors.add('$key.$e'));
-      }
-    });
-    return errors;
-  }
-
-  static Map<String, dynamic> _validateMapping({
-    required Map<String, dynamic> data,
-    required Map<String, dynamic> params,
-  }) {
-    final errors = <String, dynamic>{};
-
-    params.forEach((key, value) {
-      if (value is Zod) {
-        final valid = value.build(data[key] ?? '');
-        if (valid != null) errors.addAll({key: valid});
-      } else if (value is Map) {
-        final res = _validateMapping(
-          data: data[key] ?? {},
-          params: value as Map<String, dynamic>,
-        );
-        if (res.isNotEmpty) errors.addAll({key: res});
       }
     });
     return errors;
